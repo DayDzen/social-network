@@ -23,8 +23,10 @@ func dbConn() (db *sql.DB) {
 }
 
 func init() {
-	if err := godotenv.Load("config.yaml"); err != nil {
-		log.Print("No config file found")
+	if err := godotenv.Load("prod_config.yaml"); err != nil {
+		if err = godotenv.Load("local_config.yaml"); err != nil {
+			log.Print("No config file found")
+		}
 	}
 }
 
