@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -29,32 +30,54 @@ type UserProfile struct {
 	City      string
 }
 
-func connectToDB() *sql.DB {
+func connectToDB() (*sql.DB, error) {
 	dbDriver := "mysql"
 	dbUser := os.Getenv("DB_USERNAME")
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
 	if err != nil {
-		panic(err.Error())
+		return nil, fmt.Errorf("connectToDB err: %w", err)
 	}
 
-	return db
+	return db, nil
 }
 
 var tmpl *template.Template
+var dbConn *sql.DB
 
-func init() {
-	log.Println("INIT Started")
-
-	if err := godotenv.Load("prod_config.yaml"); err != nil {
+func checkEnvs() error {
+	log.Println("Checking envs file...")
+	var err error
+	if err = godotenv.Load("prod_config.yaml"); err != nil {
 		if err = godotenv.Load("local_config.yaml"); err != nil {
-			log.Print("No config file found")
+			return fmt.Errorf("checkEnvs err: %w", err)
+		} else {
+			log.Println("Local envs OK")
 		}
+	} else {
+		log.Println("Prod envs OK")
 	}
 
+	return nil
+}
+
+func init() {
+	var err error
+	if err = checkEnvs(); err != nil {
+		log.Print("No config file found")
+	}
+
+	log.Println("Checking DB connection...")
+	dbConn, err = connectToDB()
+	if err != nil {
+		panic(err.Error())
+	}
+	log.Println("DB connection OK")
+
+	log.Println("Checking templates...")
 	tmpl = template.Must(template.ParseGlob("form/*"))
-	log.Println("SUCCESS init template")
+	log.Println("Templates OK")
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
