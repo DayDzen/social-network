@@ -20,7 +20,7 @@ const (
 	EMPTY  SEX = ""
 )
 
-type UserProfile struct {
+type User struct {
 	ID        int64
 	FirstName string
 	LastName  string
@@ -81,15 +81,15 @@ func init() {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	dbConn := connectToDB()
-	defer dbConn.Close()
+	// dbConn := connectToDB()
+	// defer dbConn.Close()
 
 	selDB, err := dbConn.Query("SELECT * FROM user_profiles ORDER BY id DESC")
 	if err != nil {
 		panic(err.Error())
 	}
-	uProfile := UserProfile{}
-	res := []UserProfile{}
+	user := User{}
+	res := []User{}
 	for selDB.Next() {
 		var id int64
 		var age int16
@@ -98,29 +98,29 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err.Error())
 		}
-		uProfile.ID = id
-		uProfile.FirstName = fName
-		uProfile.LastName = lName
-		uProfile.Age = age
-		uProfile.Sex = SEX(sex)
-		uProfile.Hobbies = hobbies
-		uProfile.City = city
+		user.ID = id
+		user.FirstName = fName
+		user.LastName = lName
+		user.Age = age
+		user.Sex = SEX(sex)
+		user.Hobbies = hobbies
+		user.City = city
 
-		res = append(res, uProfile)
+		res = append(res, user)
 	}
 	tmpl.ExecuteTemplate(w, "Index", res)
 }
 
 func Show(w http.ResponseWriter, r *http.Request) {
-	dbConn := connectToDB()
-	defer dbConn.Close()
+	// dbConn := connectToDB()
+	// defer dbConn.Close()
 
 	nId := r.URL.Query().Get("id")
 	selDB, err := dbConn.Query("SELECT * FROM user_profiles WHERE id=?", nId)
 	if err != nil {
 		panic(err.Error())
 	}
-	uProfile := UserProfile{}
+	user := User{}
 	for selDB.Next() {
 		var id int64
 		var age int16
@@ -130,15 +130,15 @@ func Show(w http.ResponseWriter, r *http.Request) {
 			panic(err.Error())
 		}
 
-		uProfile.ID = id
-		uProfile.FirstName = fName
-		uProfile.LastName = lName
-		uProfile.Age = age
-		uProfile.Sex = SEX(sex)
-		uProfile.Hobbies = hobbies
-		uProfile.City = city
+		user.ID = id
+		user.FirstName = fName
+		user.LastName = lName
+		user.Age = age
+		user.Sex = SEX(sex)
+		user.Hobbies = hobbies
+		user.City = city
 	}
-	tmpl.ExecuteTemplate(w, "Show", uProfile)
+	tmpl.ExecuteTemplate(w, "Show", user)
 }
 
 func New(w http.ResponseWriter, r *http.Request) {
@@ -146,22 +146,22 @@ func New(w http.ResponseWriter, r *http.Request) {
 }
 
 func Insert(w http.ResponseWriter, r *http.Request) {
-	dbConn := connectToDB()
-	defer dbConn.Close()
+	// dbConn := connectToDB()
+	// defer dbConn.Close()
 
 	if r.Method == "POST" {
-		fName := r.FormValue("f_name")
-		lName := r.FormValue("l_name")
+		fName := r.FormValue("first_name")
+		lName := r.FormValue("last_name")
 		age := r.FormValue("age")
 		sex := r.FormValue("sex")
 		hobbies := r.FormValue("hobbies")
 		city := r.FormValue("city")
-		insForm, err := dbConn.Prepare("INSERT INTO user_profiles(f_name, l_name, age, sex, hobbies, city) VALUES(?,?,?,?,?,?)")
+		insForm, err := dbConn.Prepare("INSERT INTO user_profiles(first_name, last_name, age, sex, hobbies, city) VALUES(?,?,?,?,?,?)")
 		if err != nil {
 			panic(err.Error())
 		}
-		insForm.Exec(fName, lName, city)
-		log.Printf("INSERT:\nfName: %v\nlName: %v\nAge: %v\nSex: %v\nHobbies: %v\nCity: %v\n", fName, lName, age, sex, hobbies, city)
+		insForm.Exec(fName, lName, age, sex, hobbies, city)
+		log.Printf("INSERT:\nFirst Name: %v\nLast Name: %v\nAge: %v\nSex: %v\nHobbies: %v\nCity: %v\n", fName, lName, age, sex, hobbies, city)
 	}
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
@@ -171,7 +171,8 @@ func main() {
 
 	http.HandleFunc("/", Index)
 	http.HandleFunc("/show", Show)
-	http.HandleFunc("/edit", Insert)
+	http.HandleFunc("/new", New)
+	http.HandleFunc("/insert", Insert)
 
 	http.ListenAndServe(":8080", nil)
 }

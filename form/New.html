@@ -1,9 +1,13 @@
 {{ define "New" }}
   {{ template "Header" }}
     {{ template "Menu" }} 
-   <h2>New Name and City</h2>  
+   <h2>New User</h2>  
     <form method="POST" action="insert">
-      <label> Name </label><input type="text" name="name" /><br />
+      <label> First Name </label><input type="text" name="first_name" /><br />
+      <label> Last Name </label><input type="text" name="last_name" /><br />
+      <label> Age </label><input type="number" name="age" /><br />
+      <label> Sex </label><input type="text" name="sex" /><br />
+      <label> Hobbies </label><input type="text" name="hobbies" /><br />
       <label> City </label><input type="text" name="city" /><br />
       <input type="submit" value="Save user" />
     </form>
