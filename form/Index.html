@@ -7,10 +7,6 @@
       <tr>
         <td>First Name</td>
         <td>Last Name</td>
-        <!-- <td>Age</td>
-        <td>Sex</td>
-        <td>Hobbies</td>
-        <td>City</td> -->
         <td>View</td>
       </tr>
        </thead>
@@ -20,10 +16,6 @@
         <td> {{ .FirstName }} </td>
         <td> {{ .LastName }} </td>
         <td><a href="/show?id={{ .ID }}">View</a></td>
-        <!-- <td> {{ .Age }} </td>
-        <td> {{ .Sex }} </td>
-        <td> {{ .Hobbies }} </td>
-        <td>{{ .City }} </td> -->
       </tr>
     {{ end }}
        </tbody>
