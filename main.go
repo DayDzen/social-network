@@ -108,6 +108,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 		res = append(res, user)
 	}
+	log.Println(res)
 	tmpl.ExecuteTemplate(w, "Index", res)
 }
 
