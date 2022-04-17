@@ -1,9 +1,7 @@
 {{ define "Show" }}
   {{ template "Header" }}
     {{ template "Menu"  }}
-    <h2> Register {{ .ID }} </h2>
-      <p>FirstName: {{ .FirstName }}</p>
-      <p>LastName: {{ .LastName }}</p>
+    <h2>  {{ .FirstName }} {{ .LastName }} </h2>
       <p>Age: {{ .Age }}</p>
       <p>Sex: {{ .Sex }}</p>
       <p>Hobbies: {{ .Hobbies }}</p>

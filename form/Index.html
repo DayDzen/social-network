@@ -1,6 +1,3 @@
-<!DOCTYPE html>
-
-<body>
 {{ define "Index" }}
   {{ template "Header" }}
     {{ template "Menu"  }}
@@ -8,34 +5,28 @@
     <table border="1">
       <thead>
       <tr>
-        <td>ID</td>
         <td>First Name</td>
         <td>Last Name</td>
-        <td>Age</td>
+        <!-- <td>Age</td>
         <td>Sex</td>
         <td>Hobbies</td>
-        <td>City</td>
+        <td>City</td> -->
         <td>View</td>
-        <!-- <td>Edit</td> -->
-        <!-- <td>Delete</td> -->
       </tr>
        </thead>
        <tbody>
     {{ range . }}
       <tr>
-        <td>{{ .ID }}</td>
         <td> {{ .FirstName }} </td>
         <td> {{ .LastName }} </td>
-        <td> {{ .Age }} </td>
+        <td><a href="/show?id={{ .ID }}">View</a></td>
+        <!-- <td> {{ .Age }} </td>
         <td> {{ .Sex }} </td>
         <td> {{ .Hobbies }} </td>
-        <td>{{ .City }} </td> 
-        <td><a href="/show?id={{ .ID }}">View</a></td>
+        <td>{{ .City }} </td> -->
       </tr>
     {{ end }}
        </tbody>
     </table>
   {{ template "Footer" }}
 {{ end }}
-</body>
-</html>
