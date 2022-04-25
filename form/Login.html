@@ -1,11 +1,11 @@
-{{ define "SignIn" }}
+{{ define "Login" }}
   {{ template "Header" }}
     {{ template "Menu" }} 
    <h2>Sign up</h2>  
     <form method="POST" action="auth-user">
       <label> Login </label><input type="text" name="login" /><br />
-      <label> Password </label><input type="text" name="pass" /><br />
-      <input type="submit" value="Sign in" />
+      <label> Password </label><input type="password" name="pass" /><br />
+      <input type="submit" value="Login" />
     </form>
   {{ template "Footer" }}
 {{ end }}

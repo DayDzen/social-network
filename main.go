@@ -9,13 +9,13 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var SECRET_KEY = []byte("gosecretkey")
+// var SECRET_KEY = []byte("gosecretkey")
 
 type GENDER string
 
@@ -87,11 +87,10 @@ func init() {
 	log.Println("Templates OK")
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request) {
 	selDB, err := dbConn.Query("SELECT id, first_name, last_name FROM users ORDER BY id DESC")
 	if err != nil {
-		err = fmt.Errorf("Index err: %w", err)
-		panic(err.Error())
+		panic(fmt.Errorf("index err: %w", err))
 	}
 
 	res := []User{}
@@ -100,8 +99,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		var fName, lName string
 
 		if err = selDB.Scan(&id, &fName, &lName); err != nil {
-			err = fmt.Errorf("Index err: %w", err)
-			panic(err.Error())
+			panic(fmt.Errorf("index err: %w", err))
 		}
 
 		res = append(res, User{
@@ -110,44 +108,55 @@ func Index(w http.ResponseWriter, r *http.Request) {
 			LastName:  lName,
 		})
 	}
+
+	log.Println(r.Cookies())
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(res)
 	tmpl.ExecuteTemplate(w, "Index", res)
 }
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		login := r.FormValue("login")
-		pass := getHash([]byte(r.FormValue("pass")))
+func userSignup(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "Signup", nil)
+}
 
-		fName := r.FormValue("first_name")
-		lName := r.FormValue("last_name")
-		age := r.FormValue("age")
-		gender := r.FormValue("gender")
-		hobbies := r.FormValue("hobbies")
-		city := r.FormValue("city")
+func createUser(w http.ResponseWriter, r *http.Request) {
+	login := r.FormValue("login")
+	pass := getHash([]byte(r.FormValue("pass")))
 
-		insForm, err := dbConn.Prepare("INSERT INTO users(login, password, first_name, last_name, age, gender, hobbies, city) VALUES(?,?,?,?,?,?,?,?)")
-		if err != nil {
-			err = fmt.Errorf("SignUp err: %w", err)
-			panic(err.Error())
-		}
+	fName := r.FormValue("first_name")
+	lName := r.FormValue("last_name")
+	age := r.FormValue("age")
+	gender := r.FormValue("gender")
+	hobbies := r.FormValue("hobbies")
+	city := r.FormValue("city")
 
-		if _, err = insForm.Exec(login, pass, fName, lName, age, gender, hobbies, city); err != nil {
-			err = fmt.Errorf("SignUp err: %w", err)
-			panic(err.Error())
-		}
-
-		log.Printf("INSERT:\nFirst Name: %v\nLast Name: %v\nAge: %v\nGender: %v\nHobbies: %v\nCity: %v\n", fName, lName, age, gender, hobbies, city)
+	insForm, err := dbConn.Prepare("INSERT INTO users(login, password, first_name, last_name, age, gender, hobbies, city) VALUES(?,?,?,?,?,?,?,?)")
+	if err != nil {
+		err = fmt.Errorf("SignUp err: %w", err)
+		panic(err.Error())
 	}
+
+	if _, err = insForm.Exec(login, pass, fName, lName, age, gender, hobbies, city); err != nil {
+		err = fmt.Errorf("SignUp err: %w", err)
+		panic(err.Error())
+	}
+
+	log.Printf("INSERT:\nFirst Name: %v\nLast Name: %v\nAge: %v\nGender: %v\nHobbies: %v\nCity: %v\n", fName, lName, age, gender, hobbies, city)
+
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
-func AuthUser(w http.ResponseWriter, r *http.Request) {
+func userLogin(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "Login", nil)
+}
+
+func authUser(w http.ResponseWriter, r *http.Request) {
 	login := r.FormValue("login")
 	userPass := r.FormValue("pass")
 
 	selDB := dbConn.QueryRow("SELECT password FROM users WHERE login=?", login)
 	if selDB.Err() != nil {
-		panic(fmt.Errorf("Show err: %w", selDB.Err()))
+		panic(fmt.Errorf("authUser err: %w", selDB.Err()))
 	}
 
 	var dbPass string
@@ -156,7 +165,7 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"response":"No user with this login!"}`))
 			return
 		}
-		panic(fmt.Errorf("SignIn err: %w", err))
+		panic(fmt.Errorf("authUser err: %w", err))
 	}
 
 	userPassByte := []byte(userPass)
@@ -167,22 +176,22 @@ func AuthUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := generateJWT()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message":"` + err.Error() + `"}`))
-		return
-	}
+	// jwtToken, err := generateJWT()
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	w.Write([]byte(`{"message":"` + err.Error() + `"}`))
+	// 	return
+	// }
 
-	w.Write([]byte(`{"token":"` + jwtToken + `"}`))
+	// w.Write([]byte(`{"token":"` + jwtToken + `"}`))
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
-func Show(w http.ResponseWriter, r *http.Request) {
+func userProfile(w http.ResponseWriter, r *http.Request) {
 	nId := r.URL.Query().Get("id")
 	selDB, err := dbConn.Query("SELECT first_name, last_name, age, gender, hobbies, city FROM users WHERE id=?", nId)
 	if err != nil {
-		err = fmt.Errorf("Show err: %w", err)
-		panic(err.Error())
+		panic(fmt.Errorf("userProfile err: %w", err))
 	}
 
 	user := User{}
@@ -202,15 +211,8 @@ func Show(w http.ResponseWriter, r *http.Request) {
 		user.Hobbies = hobbies
 		user.City = city
 	}
-	tmpl.ExecuteTemplate(w, "Show", user)
-}
 
-func SignUp(w http.ResponseWriter, r *http.Request) {
-	tmpl.ExecuteTemplate(w, "SignUp", nil)
-}
-
-func SignIn(w http.ResponseWriter, r *http.Request) {
-	tmpl.ExecuteTemplate(w, "SignIn", nil)
+	tmpl.ExecuteTemplate(w, "UserProfile", user)
 }
 
 func getHash(pwd []byte) string {
@@ -221,28 +223,30 @@ func getHash(pwd []byte) string {
 	return string(hash)
 }
 
-func generateJWT() (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	tokenString, err := token.SignedString(SECRET_KEY)
-	if err != nil {
-		log.Println("Error in JWT token generation")
-		return "", err
-	}
-	return tokenString, nil
-}
+// func generateJWT() (string, error) {
+// 	token := jwt.New(jwt.SigningMethodHS256)
+// 	tokenString, err := token.SignedString(SECRET_KEY)
+// 	if err != nil {
+// 		log.Println("Error in JWT token generation")
+// 		return "", err
+// 	}
+// 	return tokenString, nil
+// }
 
 func main() {
 	log.Println("Server started on: http://localhost:8080")
 
-	http.HandleFunc("/", Index)
+	router := mux.NewRouter()
 
-	http.HandleFunc("/sign-up", SignUp)
-	http.HandleFunc("/sign-in", SignIn)
+	router.HandleFunc("/", index)
+
+	router.HandleFunc("/signup", userSignup)
+	router.HandleFunc("/create-user", createUser).Methods(http.MethodPost)
 	// http.HandleFunc("/sign-offss", SignOff)
+	router.HandleFunc("/login", userLogin)
+	router.HandleFunc("/auth-user", authUser).Methods(http.MethodPost)
 
-	http.HandleFunc("/create-user", CreateUser)
-	http.HandleFunc("/auth-user", AuthUser)
-	http.HandleFunc("/show", Show)
+	router.HandleFunc("/user-profile", userProfile).Methods(http.MethodGet)
 
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
